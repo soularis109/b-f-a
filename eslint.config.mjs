@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'dist/**', 'coverage/**'],
+    ignores: ['eslint.config.mjs', 'dist/**', 'coverage/**', 'src/generated/**'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -37,6 +37,18 @@ export default tseslint.config(
     files: ['test/**/*.ts', '**/*.spec.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+    },
+  },
+  {
+    // typescript-eslint's type-aware linting fails to resolve the generated
+    // Prisma client's model delegates (e.g. `prisma.bill`) and `Prisma.Decimal`
+    // as usable types (reports them as an unresolved "error" type), even though
+    // plain `tsc --noEmit` type-checks the same code without any diagnostics.
+    files: ['src/bills/bills.service.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
     },

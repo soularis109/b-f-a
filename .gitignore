@@ -21,6 +21,13 @@ yarn-error.log*
 # coverage
 /coverage
 
+# prisma
+/src/generated
+/prisma/*.db
+/prisma/*.db-journal
+/prisma/*.db-wal
+/prisma/*.db-shm
+
 # OS
 .DS_Store
 
