@@ -1,0 +1,77 @@
+schema: spec-driven
+
+context: |
+  Стек і версії:
+  - Node — версія закріплена в .nvmrc; завжди `nvm use` перед роботою (деякі патчі
+    Node 22.x ламають @nestjs/cli).
+  - pnpm як пакетний менеджер.
+  - NestJS 12, ESM ("type": "module"), платформа Express.
+  - TypeScript у strict mode: `strict: true` + `noUncheckedIndexedAccess`,
+    `noImplicitOverride`, `noFallthroughCasesInSwitch` — не послаблювати без явної,
+    аргументованої причини.
+  - Prisma + SQLite для персистентності.
+  - ESLint (flat config, typescript-eslint type-checked правила) + Prettier.
+  - Vitest для unit- і e2e-тестів.
+
+  ESM-пастка: проєкт використовує `moduleResolution: nodenext`, тому relative-імпорти
+  в TS-файлах потребують `.js`-розширення (`./app.module.js`, не `./app.module`).
+
+  Команди перевірки якості (усі мають проходити перед тим, як коміт/PR вважається
+  готовим):
+  - `pnpm typecheck` — tsc --noEmit
+  - `pnpm lint` (`pnpm lint:fix` — з автофіксом)
+  - `pnpm format:check` (`pnpm format` — із записом)
+  - `pnpm test` — unit-тести
+  - `pnpm test:e2e` — e2e-тести
+  - `pnpm test:cov` — покриття
+
+  Правило по coverage: без жорсткого відсоткового gate. Покриття нового/зміненого
+  коду не повинно бути нижче за те, що було до зміни; будь-яка нова логіка
+  обов'язково супроводжується тестами. `pnpm test:cov` — інструмент перевірки цього
+  правила, а не число, яке треба перевищити.
+
+  Конвенція комітів: Conventional Commits (`type(scope?): опис`, типи — feat, fix,
+  chore, refactor, test, docs, ci, build). Зміни в межах однієї задачі розбиваються
+  на логічні групи окремими комітами — код, тести, документація/конфіг не
+  змішуються в одному коміті. Без автоматичного enforcement (немає commitlint/husky)
+  — дотримання на рівні дисципліни.
+
+  Правило для агента: ніколи не виконувати `git commit` без прямої команди
+  користувача в поточній розмові — навіть якщо план чи tasks.md згадують коміт як
+  наступний крок.
+
+rules:
+  tasks:
+    - "Кожен таск, що додає нову логіку, включає написання/оновлення тестів у
+      власному описі, а не окремим «тестовим» таском наприкінці."
+    - "Команда верифікації в чекбоксі — реальна команда чи конкретний тестовий
+      сценарій (наприклад `pnpm typecheck`, `pnpm lint`, `pnpm test <file>`,
+      `pnpm test:e2e`), а не абстрактне «перевірити вручну»."
+    - "Останній таск списку — повний прогін `pnpm typecheck && pnpm lint &&
+      pnpm format:check && pnpm test && pnpm test:e2e`."
+  design:
+    - "Будь-яке рішення, що послаблює TypeScript strict-налаштування
+      (noUncheckedIndexedAccess, noImplicitOverride, noFallthroughCasesInSwitch),
+      потребує явного обґрунтування в Risks / Trade-offs."
+
+operations:
+  apply:
+    guidance:
+      - "Перед тим як позначити таск виконаним, прогнати `pnpm typecheck`,
+        `pnpm lint` і відповідні тести для зачепленого коду."
+      - "Перед завершенням apply (усі таски done) прогнати повний набір
+        `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`,
+        `pnpm test:e2e`."
+      - "Ніколи не виконувати `git commit` без явної команди користувача в
+        поточній розмові — навіть якщо tasks.md чи план згадують коміт як
+        наступний крок."
+      - "Якщо користувач попросив закомітити — розбивати на логічні групи
+        окремими комітами: код, тести, документація/конфіг не змішуються."
+  archive:
+    guidance:
+      - "Перед архівуванням переконатись, що повний набір quality-команд
+        (typecheck, lint, format:check, test, test:e2e) пройшов успішно."
+      - "Ніколи не виконувати `git commit` чи `git push` без явної команди
+        користувача."
+      - "Коротко підсумувати результат зміни (що додано, чи нова логіка
+        покрита тестами) перед завершенням архівації."
