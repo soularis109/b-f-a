@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import type { Bill } from '../generated/prisma/client.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateBillDto } from './dto/create-bill.dto.js';
@@ -23,14 +24,7 @@ export class BillsService {
       },
     });
 
-    return {
-      id: bill.id,
-      amount: bill.amount.toNumber(),
-      payee: bill.payee,
-      status: bill.status,
-      createdAt: bill.createdAt,
-      updatedAt: bill.updatedAt,
-    };
+    return this.toBillResponse(bill);
   }
 
   async pay(id: string): Promise<BillResponse> {
@@ -48,13 +42,17 @@ export class BillsService {
       data: { status: 'paid' },
     });
 
+    return this.toBillResponse(paid);
+  }
+
+  private toBillResponse(bill: Bill): BillResponse {
     return {
-      id: paid.id,
-      amount: paid.amount.toNumber(),
-      payee: paid.payee,
-      status: paid.status,
-      createdAt: paid.createdAt,
-      updatedAt: paid.updatedAt,
+      id: bill.id,
+      amount: bill.amount.toNumber(),
+      payee: bill.payee,
+      status: bill.status,
+      createdAt: bill.createdAt,
+      updatedAt: bill.updatedAt,
     };
   }
 }
