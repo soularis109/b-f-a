@@ -7,10 +7,12 @@ describe('BillsController', () => {
   let controller: BillsController;
   const billsServiceMock = {
     create: vi.fn(),
+    pay: vi.fn(),
   };
 
   beforeEach(async () => {
     billsServiceMock.create.mockReset();
+    billsServiceMock.pay.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [BillsController],
@@ -35,6 +37,23 @@ describe('BillsController', () => {
     const result = await controller.create(dto);
 
     expect(billsServiceMock.create).toHaveBeenCalledWith(dto);
+    expect(result).toBe(expected);
+  });
+
+  it('delegates bill payment to BillsService and returns its result', async () => {
+    const expected: BillResponse = {
+      id: 'some-id',
+      amount: 10,
+      payee: 'Acme',
+      status: 'paid',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    billsServiceMock.pay.mockResolvedValue(expected);
+
+    const result = await controller.pay('some-id');
+
+    expect(billsServiceMock.pay).toHaveBeenCalledWith('some-id');
     expect(result).toBe(expected);
   });
 });
