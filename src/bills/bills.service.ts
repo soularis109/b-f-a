@@ -8,7 +8,11 @@ import type { Bill } from '../generated/prisma/client.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateBillDto } from './dto/create-bill.dto.js';
-import type { BillResponse } from './types/bill-response.type.js';
+import { GetBillsQueryDto } from './dto/get-bills-query.dto.js';
+import type {
+  BillResponse,
+  PaginatedBillsResponse,
+} from './types/bill-response.type.js';
 
 @Injectable()
 export class BillsService {
@@ -43,6 +47,30 @@ export class BillsService {
     });
 
     return this.toBillResponse(paid);
+  }
+
+  async findAll(query: GetBillsQueryDto): Promise<PaginatedBillsResponse> {
+    const { page, limit } = query;
+    const skip = (page - 1) * limit;
+
+    const [bills, total] = await this.prisma.$transaction([
+      this.prisma.bill.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.bill.count(),
+    ]);
+
+    return {
+      data: bills.map((bill) => this.toBillResponse(bill)),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   private toBillResponse(bill: Bill): BillResponse {
