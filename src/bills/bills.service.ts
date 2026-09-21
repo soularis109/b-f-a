@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateBillDto } from './dto/create-bill.dto.js';
@@ -26,6 +30,31 @@ export class BillsService {
       status: bill.status,
       createdAt: bill.createdAt,
       updatedAt: bill.updatedAt,
+    };
+  }
+
+  async pay(id: string): Promise<BillResponse> {
+    const bill = await this.prisma.bill.findUnique({ where: { id } });
+
+    if (!bill) {
+      throw new NotFoundException(`Bill with id "${id}" not found`);
+    }
+    if (bill.status === 'paid') {
+      throw new ConflictException(`Bill with id "${id}" is already paid`);
+    }
+
+    const paid = await this.prisma.bill.update({
+      where: { id },
+      data: { status: 'paid' },
+    });
+
+    return {
+      id: paid.id,
+      amount: paid.amount.toNumber(),
+      payee: paid.payee,
+      status: paid.status,
+      createdAt: paid.createdAt,
+      updatedAt: paid.updatedAt,
     };
   }
 }
