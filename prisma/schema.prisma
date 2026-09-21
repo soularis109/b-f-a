@@ -12,6 +12,7 @@ datasource db {
 
 enum BillStatus {
   unpaid
+  paid
 }
 
 model Bill {
