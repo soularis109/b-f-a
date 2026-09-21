@@ -79,4 +79,42 @@ describe('BillsController (e2e)', () => {
       .send({ amount: 10, payee: 'Acme', extra: 'nope' })
       .expect(400);
   });
+
+  it('pays an unpaid bill (POST /bills/:id/pay)', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/bills')
+      .send({ amount: 42.5, payee: 'Acme Corp' })
+      .expect(201);
+    const id = created.body.id as string;
+
+    const response = await request(app.getHttpServer())
+      .post(`/bills/${id}/pay`)
+      .expect(200);
+
+    expect(response.body).toMatchObject({ id, status: 'paid' });
+
+    const stored = await prisma.bill.findUnique({ where: { id } });
+    expect(stored?.status).toBe('paid');
+    expect(stored?.updatedAt.getTime()).toBeGreaterThanOrEqual(
+      stored!.createdAt.getTime(),
+    );
+  });
+
+  it('rejects paying an already-paid bill', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/bills')
+      .send({ amount: 42.5, payee: 'Acme Corp' })
+      .expect(201);
+    const id = created.body.id as string;
+
+    await request(app.getHttpServer()).post(`/bills/${id}/pay`).expect(200);
+
+    await request(app.getHttpServer()).post(`/bills/${id}/pay`).expect(409);
+  });
+
+  it('returns 404 when paying a non-existent bill', () => {
+    return request(app.getHttpServer())
+      .post('/bills/00000000-0000-0000-0000-000000000000/pay')
+      .expect(404);
+  });
 });
